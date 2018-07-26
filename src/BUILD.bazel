@@ -1,0 +1,20 @@
+package(default_visibility = ["//visibility:public"])
+
+load("@bazel_javascript//:defs.bzl", "ts_library", "web_bundle")
+
+web_bundle(
+  name = "main-dev",
+  lib = ":main",
+  entry = "main.js",
+  html_template = ":main.html",
+  mode = "development",
+)
+
+ts_library(
+  name = "main",
+  srcs = ["main.ts"],
+  deps = [
+    "//src/components/app:App",
+    "//:packages",
+  ],
+)
