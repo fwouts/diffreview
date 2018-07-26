@@ -14,7 +14,7 @@ ts_library(
   name = "main",
   srcs = ["main.ts"],
   deps = [
-    "//src/components/app:App",
+    "//src/components/app",
     "//:packages",
   ],
 )
