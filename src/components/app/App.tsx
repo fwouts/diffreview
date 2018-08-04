@@ -6,7 +6,7 @@ import { connect } from "react-redux";
 import "./App.css";
 import * as styles from "./App.module.css";
 
-const App = (props: { load: () => void }) => {
+const PureApp = (props: { load: () => void }) => {
   return (
     <div className={styles.App}>
       <button onClick={props.load}>Load</button>
@@ -21,9 +21,7 @@ const mapDispatchToProps = (dispatch: Dispatch) => ({
   load: () => dispatch(fetchBranches())
 });
 
-const ConnectedApp = connect(
+export const App = connect(
   mapStateToProps,
   mapDispatchToProps
-)(App);
-
-export default ConnectedApp;
+)(PureApp);
