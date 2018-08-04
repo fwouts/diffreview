@@ -1,7 +1,29 @@
+import Editor from "@/components/editor/Editor";
+import { Tree } from "@/components/tree/Tree";
+import { Dispatch, fetchBranches } from "@/store/actions";
 import React from "react";
-import Editor from "../editor/Editor";
+import { connect } from "react-redux";
 import "./App.css";
+import * as styles from "./App.module.css";
 
-export default () => {
-  return <Editor />;
+const App = (props: { load: () => void }) => {
+  return (
+    <div className={styles.App}>
+      <button onClick={props.load}>Load</button>
+      <Tree />
+      <Editor />
+    </div>
+  );
 };
+
+const mapStateToProps = null;
+const mapDispatchToProps = (dispatch: Dispatch) => ({
+  load: () => dispatch(fetchBranches())
+});
+
+const ConnectedApp = connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(App);
+
+export default ConnectedApp;

@@ -5,9 +5,12 @@ const HtmlWebpackPlugin = require("html-webpack-plugin");
 const mode = process.env.NODE_ENV || "development";
 
 module.exports = {
-  entry: path.resolve(__dirname, "src", "main.ts"),
+  entry: path.resolve(__dirname, "src", "main.tsx"),
   resolve: {
-    extensions: [".tsx", ".ts", ".js"]
+    extensions: [".tsx", ".ts", ".js"],
+    alias: {
+      "@": path.resolve(__dirname, "src")
+    }
   },
   target: "web",
   mode,

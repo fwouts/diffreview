@@ -1,2 +1,5 @@
 node_modules/
 dist/
+
+# Ignore while constants are hardcoded.
+src/config.ts
