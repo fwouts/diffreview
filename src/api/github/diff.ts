@@ -23,77 +23,96 @@ async function loadUpdatedDirectory(
   if (oldNode.kind !== "dir" || newNode.kind !== "dir") {
     throw new Error();
   }
-  const updatedDirectory: UpdatedDirectory = {
-    kind: "updated-dir",
-    oldId,
-    newId,
-    entries: {}
-  };
-  for (const [entryName, newEntry] of Object.entries(newNode.entries)) {
-    const oldEntry = oldNode.entries[entryName];
-    if (!oldEntry) {
-      // New file or directory.
-      if (newEntry.type === "file") {
-        updatedDirectory.entries[entryName] = {
-          kind: "added-file",
-          newId: newEntry.id
-        };
+  const newEntries = Object.entries(newNode.entries).map(
+    async ([entryName, newEntry]): Promise<[string, DiffTreeEntry]> => {
+      const oldEntry = oldNode.entries[entryName];
+      if (!oldEntry) {
+        // New file or directory.
+        if (newEntry.type === "file") {
+          return [
+            entryName,
+            {
+              kind: "added-file",
+              newId: newEntry.id
+            }
+          ];
+        } else {
+          console.log("Loading from updated: directory " + entryName);
+          return [entryName, await loadAddedDirectory(token, newEntry.id)];
+        }
+      } else if (oldEntry.id === newEntry.id) {
+        // Unchanged file or directory.
+        if (oldEntry.type === "file") {
+          return [
+            entryName,
+            {
+              kind: "unchanged-file",
+              id: oldEntry.id
+            }
+          ];
+        } else {
+          return [
+            entryName,
+            {
+              kind: "unchanged-dir",
+              id: oldEntry.id
+            }
+          ];
+        }
       } else {
-        console.log("Loading from updated: directory " + entryName);
-        updatedDirectory.entries[entryName] = await loadAddedDirectory(
-          token,
-          newEntry.id
-        );
-      }
-    } else if (oldEntry.id === newEntry.id) {
-      // Unchanged file or directory.
-      if (oldEntry.type === "file") {
-        updatedDirectory.entries[entryName] = {
-          kind: "unchanged-file",
-          id: oldEntry.id
-        };
-      } else {
-        updatedDirectory.entries[entryName] = {
-          kind: "unchanged-dir",
-          id: oldEntry.id
-        };
-      }
-    } else {
-      // Updated file or directory.
-      if (oldEntry.type !== newEntry.type) {
-        // TODO: Handle this.
-      }
-      if (oldEntry.type === "file") {
-        updatedDirectory.entries[entryName] = {
-          kind: "updated-file",
-          oldId: oldEntry.id,
-          newId: newEntry.id
-        };
-      } else {
-        updatedDirectory.entries[entryName] = await loadUpdatedDirectory(
-          token,
-          oldEntry.id,
-          newEntry.id
-        );
+        // Updated file or directory.
+        if (oldEntry.type !== newEntry.type) {
+          // TODO: Handle this.
+        }
+        if (oldEntry.type === "file") {
+          return [
+            entryName,
+            {
+              kind: "updated-file",
+              oldId: oldEntry.id,
+              newId: newEntry.id
+            }
+          ];
+        } else {
+          return [
+            entryName,
+            await loadUpdatedDirectory(token, oldEntry.id, newEntry.id)
+          ];
+        }
       }
     }
-  }
+  );
+  const entries: { [entryName: string]: DiffTreeEntry } = (await Promise.all(
+    newEntries
+  )).reduce(
+    (acc: { [entryName: string]: DiffTreeEntry }, [entryName, entry]) => {
+      acc[entryName] = entry;
+      return acc;
+    },
+    {}
+  );
   for (const [entryName, oldEntry] of Object.entries(oldNode.entries)) {
     if (!newNode.entries[entryName]) {
       // Deleted file or directory.
       if (oldEntry.type === "file") {
-        updatedDirectory.entries[entryName] = {
+        entries[entryName] = {
           kind: "deleted-file",
           oldId: oldEntry.id
         };
       } else {
-        updatedDirectory.entries[entryName] = {
+        entries[entryName] = {
           kind: "deleted-dir",
           oldId: oldEntry.id
         };
       }
     }
   }
+  const updatedDirectory: UpdatedDirectory = {
+    kind: "updated-dir",
+    oldId,
+    newId,
+    entries
+  };
   return updatedDirectory;
 }
 
