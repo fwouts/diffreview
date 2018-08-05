@@ -1,18 +1,17 @@
-import * as models from "@/api/models";
-import { getTree } from "@/store/selectors";
+import { UpdatedDirectory } from "@/api/github/diff";
 import { RepoState } from "@/store/state";
 import React from "react";
 import { connect } from "react-redux";
 import * as styles from "./Tree.module.css";
 
-const PureTree = (props: { tree: models.Tree | null }) => {
+const PureTree = (props: { tree: UpdatedDirectory | null }) => {
   return (
     <pre className={styles.Tree}>{JSON.stringify(props.tree, null, 2)}</pre>
   );
 };
 
 const mapStateToProps = (state: RepoState) => ({
-  tree: getTree(state)
+  tree: state.tree
 });
 const mapDispatchToProps = null;
 

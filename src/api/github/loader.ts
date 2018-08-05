@@ -1,4 +1,4 @@
-import { Tree } from "@/api/models";
+import fetchContent from "@/api/github/graphql/content";
 import fetchRepositoryRootTree from "./graphql/repositoryroottree";
 
 export async function loadRepository(
@@ -6,50 +6,59 @@ export async function loadRepository(
   owner: string,
   repository: string,
   branch: string
-) {
-  let result = await fetchRepositoryRootTree(token, owner, repository, branch);
-  let tree: Tree = {};
-  for (let entry of result.repository.ref.target.tree.entries) {
-    if (entry.type === "tree") {
-      tree[entry.name] = {
-        type: "tree"
-      };
-    } else if (entry.type === "blob") {
-      tree[entry.name] = {
-        type: "file"
-      };
-    } else {
-      throw new Error(`Unknown entry type: ${entry.type}.`);
-    }
-  }
-  return tree;
+): Promise<NodeId> {
+  const result = await fetchRepositoryRootTree(
+    token,
+    owner,
+    repository,
+    branch
+  );
+  return result.repository.ref.target.tree.id;
 }
 
-// export async function loadNode(
-//   token: string,
-//   id: string
-// ): Promise<Tree | string | null> {
-//   let content = await fetchContent(token, id);
-//   switch (content.node.__typename) {
-//     case "Tree":
-//       let tree: Tree = {};
-//       for (let entry of content.node.entries) {
-//         if (entry.type === "tree") {
-//           tree[entry.name] = {
-//             type: "tree"
-//           };
-//         } else if (entry.type === "blob") {
-//           tree[entry.name] = {
-//             type: "file"
-//           };
-//         } else {
-//           throw new Error(`Unknown entry type: ${entry.type}.`);
-//         }
-//       }
-//       return tree;
-//     case "Blob":
-//       return content.node.text;
-//     default:
-//       throw new Error(`Unknown node type: ${content.node.__typename}.`);
-//   }
-// }
+export async function loadNode(
+  token: string,
+  id: string
+): Promise<Directory | File> {
+  const content = await fetchContent(token, id);
+  switch (content.node.__typename) {
+    case "Tree":
+      const loadedDirectory: Directory = {
+        kind: "dir",
+        entries: {}
+      };
+      for (const entry of content.node.entries) {
+        // TODO: Handle other types.
+        const type = entry.type === "blob" ? "file" : "dir";
+        loadedDirectory.entries[entry.name] = {
+          type,
+          id: entry.object.id
+        };
+      }
+      return loadedDirectory;
+    case "Blob":
+      return {
+        kind: "file",
+        content: content.node.text
+      };
+    default:
+      throw new Error(`Unknown node type: ${content.node.__typename}.`);
+  }
+}
+
+export type NodeId = string;
+
+export interface Directory {
+  kind: "dir";
+  entries: {
+    [entryName: string]: {
+      type: "dir" | "file";
+      id: NodeId;
+    };
+  };
+}
+
+export interface File {
+  kind: "file";
+  content: string;
+}

@@ -5,13 +5,7 @@ export interface RepositoryRootTree {
     ref: {
       target: {
         tree: {
-          entries: Array<{
-            name: string;
-            type: "tree" | "blob" | string;
-            object: {
-              id: string;
-            };
-          }>;
+          id: string;
         };
       };
     };
@@ -32,13 +26,7 @@ export default async function fetchRepositoryRootTree(
       target {
         ... on Commit {
           tree {
-            entries {
-              name
-              type
-              object {
-                id
-              }
-            }
+            id
           }
         }
       }

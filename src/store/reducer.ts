@@ -6,40 +6,18 @@ export default (
   state: RepoState = {
     repoOwner: config.OWNER,
     repoName: config.REPO,
-    leftBranch: {
-      name: config.LEFT_BRANCH,
-      data: {
-        kind: "unloaded"
-      }
-    },
-    rightBranch: {
-      name: config.RIGHT_BRANCH,
-      data: {
-        kind: "unloaded"
-      }
-    }
+    oldBranch: config.OLD_BRANCH,
+    newBranch: config.NEW_BRANCH,
+    tree: null
   },
   action: Action
 ): RepoState => {
   switch (action.type) {
-    case "UPDATE_BRANCH_DATA":
-      if (action.side === "left") {
-        return {
-          ...state,
-          leftBranch: {
-            name: action.name,
-            data: action.data
-          }
-        };
-      } else {
-        return {
-          ...state,
-          rightBranch: {
-            name: action.name,
-            data: action.data
-          }
-        };
-      }
+    case "UPDATE_TREE":
+      return {
+        ...state,
+        tree: action.tree
+      };
   }
   console.warn(`Unhandled action: ${action.type}.`);
   return state;
