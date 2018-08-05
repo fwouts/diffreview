@@ -1,14 +1,30 @@
+import fetchPullRequest from "@/api/github/graphql/pullrequest";
 import { loadNode, loadRepository } from "@/api/github/loader";
 
 export async function loadDiff(
   token: string,
   owner: string,
   repository: string,
-  leftBranch: string,
-  rightBranch: string
+  pullRequestId: number
 ): Promise<UpdatedDirectory> {
-  const oldTreeId = await loadRepository(token, owner, repository, leftBranch);
-  const newTreeId = await loadRepository(token, owner, repository, rightBranch);
+  const pullRequest = await fetchPullRequest(
+    token,
+    owner,
+    repository,
+    pullRequestId
+  );
+  const oldTreeId = await loadRepository(
+    token,
+    owner,
+    repository,
+    pullRequest.repository.pullRequest.baseRefName
+  );
+  const newTreeId = await loadRepository(
+    token,
+    owner,
+    repository,
+    pullRequest.repository.pullRequest.headRefName
+  );
   return loadUpdatedDirectory(token, oldTreeId, newTreeId);
 }
 

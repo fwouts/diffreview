@@ -6,8 +6,7 @@ export default (
   state: RepoState = {
     repoOwner: config.OWNER,
     repoName: config.REPO,
-    oldBranch: config.OLD_BRANCH,
-    newBranch: config.NEW_BRANCH,
+    pullRequestId: config.PULL_REQUEST_ID,
     tree: null
   },
   action: Action

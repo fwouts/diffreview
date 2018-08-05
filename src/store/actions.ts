@@ -15,8 +15,7 @@ export function fetchBranches() {
         config.GITHUB_TOKEN,
         state.repoOwner,
         state.repoName,
-        state.oldBranch,
-        state.newBranch
+        state.pullRequestId
       );
       dispatch<Action>({
         type: "UPDATE_TREE",
