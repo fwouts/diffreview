@@ -17,7 +17,7 @@ export default (
         ...state,
         tree: action.tree
       };
+    default:
+      return state;
   }
-  console.warn(`Unhandled action: ${action.type}.`);
-  return state;
 };

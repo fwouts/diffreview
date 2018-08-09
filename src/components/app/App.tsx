@@ -1,6 +1,6 @@
 import Editor from "@/components/editor/Editor";
 import { Tree } from "@/components/tree/Tree";
-import { Dispatch, fetchBranches } from "@/store/actions";
+import { Dispatch, fetchTree } from "@/store/actions";
 import React from "react";
 import { connect } from "react-redux";
 import "./App.css";
@@ -18,7 +18,7 @@ const PureApp = (props: { load: () => void }) => {
 
 const mapStateToProps = null;
 const mapDispatchToProps = (dispatch: Dispatch) => ({
-  load: () => dispatch(fetchBranches())
+  load: () => dispatch(fetchTree())
 });
 
 export const App = connect(
