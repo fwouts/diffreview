@@ -29,6 +29,10 @@
   margin-left: 2em;
 }
 
+.Tree > .directory > header {
+  display: none;
+}
+
 .Tree > .directory > ul {
   margin-left: 0;
 }
