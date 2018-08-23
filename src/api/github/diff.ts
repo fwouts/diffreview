@@ -57,7 +57,8 @@ export async function loadDiff(
   const pullRequestFiles = (await octokit.pullRequests.getFiles({
     owner,
     repo,
-    number: pullRequestId
+    number: pullRequestId,
+    per_page: 300
   })).data;
   const modifiedFiles = makeTree(
     pullRequestFiles.reduce(
