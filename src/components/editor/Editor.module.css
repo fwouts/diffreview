@@ -1,3 +1,7 @@
 .Editor {
   flex-grow: 1;
 }
+
+.hidden {
+  visibility: hidden;
+}
