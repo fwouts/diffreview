@@ -22,7 +22,7 @@ const PureTree = (props: { tree: UpdatedDirectory | null }) => (
     {props.tree === null ? (
       <div>Not loaded yet</div>
     ) : (
-      <UpdatedDirectoryComponent name={""} directory={props.tree} />
+      <DirectoryComponent name={""} directory={props.tree} />
     )}
   </div>
 );
@@ -30,28 +30,14 @@ const PureTree = (props: { tree: UpdatedDirectory | null }) => (
 const EntryComponent = (props: { name: string; entry: DiffTreeEntry }) => {
   switch (props.entry.kind) {
     case "added-file":
-      return <AddedFileComponent name={props.name} file={props.entry} />;
     case "deleted-file":
-      return <DeletedFileComponent name={props.name} file={props.entry} />;
     case "updated-file":
-      return <UpdatedFileComponent name={props.name} file={props.entry} />;
     case "unchanged-file":
-      return <UnchangedFileComponent name={props.name} file={props.entry} />;
+      return <FileComponent name={props.name} file={props.entry} />;
     case "added-dir":
-      return (
-        <AddedDirectoryComponent name={props.name} directory={props.entry} />
-      );
     case "updated-dir":
-      return (
-        <UpdatedDirectoryComponent name={props.name} directory={props.entry} />
-      );
     case "unchanged-dir":
-      return (
-        <UnchangedDirectoryComponent
-          name={props.name}
-          directory={props.entry}
-        />
-      );
+      return <DirectoryComponent name={props.name} directory={props.entry} />;
     default:
       throw assertNever(props.entry);
   }
@@ -64,16 +50,22 @@ const itemMapDispatchToProps = (dispatch: Dispatch<Action>) => ({
   selectFile: (path: string) => dispatch(selectFile(path))
 });
 
-const PureAddedFileComponent = (props: {
+const PureFileComponent = (props: {
   name: string;
-  file: AddedFile;
+  file: AddedFile | DeletedFile | UpdatedFile | UnchangedFile;
   selectedPath: string | null;
   selectFile(path: string): void;
 }) => (
   <div
     {...classNames(
       styles.file,
-      styles.added,
+      props.file.kind === "added-file"
+        ? styles.added
+        : props.file.kind === "deleted-file"
+          ? styles.deleted
+          : props.file.kind === "updated-file"
+            ? styles.updated
+            : null,
       props.selectedPath === props.file.path && styles.selected
     )}
     onClick={() => props.selectFile(props.file.path)}
@@ -82,132 +74,43 @@ const PureAddedFileComponent = (props: {
   </div>
 );
 
-const AddedFileComponent = connect(
+const FileComponent = connect(
   itemMapStateToProps,
   itemMapDispatchToProps
-)(PureAddedFileComponent);
+)(PureFileComponent);
 
-const PureDeletedFileComponent = (props: {
+const PureDirectoryComponent = (props: {
   name: string;
-  file: DeletedFile;
-  selectedPath: string | null;
-  selectFile(path: string): void;
-}) => (
-  <div
-    {...classNames(
-      styles.file,
-      styles.deleted,
-      props.selectedPath === props.file.path && styles.selected
-    )}
-    onClick={() => props.selectFile(props.file.path)}
-  >
-    {props.name}
-  </div>
-);
-
-const DeletedFileComponent = connect(
-  itemMapStateToProps,
-  itemMapDispatchToProps
-)(PureDeletedFileComponent);
-
-const PureUpdatedFileComponent = (props: {
-  name: string;
-  file: UpdatedFile;
-  selectedPath: string | null;
-  selectFile(path: string): void;
-}) => (
-  <div
-    {...classNames(
-      styles.file,
-      styles.updated,
-      props.selectedPath === props.file.path && styles.selected
-    )}
-    onClick={() => props.selectFile(props.file.path)}
-  >
-    {props.name}
-  </div>
-);
-
-const UpdatedFileComponent = connect(
-  itemMapStateToProps,
-  itemMapDispatchToProps
-)(PureUpdatedFileComponent);
-
-const PureUnchangedFileComponent = (props: {
-  name: string;
-  file: UnchangedFile;
-  selectedPath: string | null;
-  selectFile(path: string): void;
-}) => (
-  <div
-    {...classNames(
-      styles.file,
-      props.selectedPath === props.file.path && styles.selected
-    )}
-    onClick={() => props.selectFile(props.file.path)}
-  >
-    {props.name}
-  </div>
-);
-
-const UnchangedFileComponent = connect(
-  itemMapStateToProps,
-  itemMapDispatchToProps
-)(PureUnchangedFileComponent);
-
-const PureAddedDirectoryComponent = (props: {
-  name: string;
-  directory: AddedDirectory;
+  directory: AddedDirectory | UpdatedDirectory | UnchangedDirectory;
   selectFile(path: string): void;
 }) => (
   <div {...classNames(styles.directory)}>
-    <header {...classNames(styles.added, styles.opened)}>{props.name}</header>
-    {entryList(props.directory.entries)}
+    <header
+      {...classNames(
+        props.directory.kind === "added-dir"
+          ? styles.added
+          : props.directory.kind === "updated-dir"
+            ? styles.updated
+            : null,
+        props.directory.kind === "unchanged-dir" ? styles.closed : styles.opened
+      )}
+    >
+      {props.name}
+    </header>
+    {props.directory.kind !== "unchanged-dir" && (
+      <ul>
+        {Object.entries(props.directory.entries).map(([name, entry]) => (
+          <EntryComponent key={name} name={name} entry={entry} />
+        ))}
+      </ul>
+    )}
   </div>
 );
 
-const AddedDirectoryComponent = connect(
+const DirectoryComponent = connect(
   itemMapStateToProps,
   itemMapDispatchToProps
-)(PureAddedDirectoryComponent);
-
-const PureUpdatedDirectoryComponent = (props: {
-  name: string;
-  directory: UpdatedDirectory;
-}) => (
-  <div {...classNames(styles.directory)}>
-    <header {...classNames(styles.updated, styles.opened)}>{props.name}</header>
-    {entryList(props.directory.entries)}
-  </div>
-);
-
-const UpdatedDirectoryComponent = connect(
-  itemMapStateToProps,
-  itemMapDispatchToProps
-)(PureUpdatedDirectoryComponent);
-
-const PureUnchangedDirectoryComponent = (props: {
-  name: string;
-  directory: UnchangedDirectory;
-}) => (
-  // TODO: Consider letting users expand the content.
-  <div {...classNames(styles.directory, styles.closed)}>
-    <header>{props.name}</header>
-  </div>
-);
-
-const UnchangedDirectoryComponent = connect(
-  itemMapStateToProps,
-  itemMapDispatchToProps
-)(PureUnchangedDirectoryComponent);
-
-const entryList = (entries: { [entryName: string]: DiffTreeEntry }) => (
-  <ul>
-    {Object.entries(entries).map(([name, entry]) => (
-      <EntryComponent key={name} name={name} entry={entry} />
-    ))}
-  </ul>
-);
+)(PureDirectoryComponent);
 
 const mapStateToProps = (state: RepoState) => ({
   tree: state.tree
