@@ -1,4 +1,4 @@
-import { Action } from "@/store/actions";
+import { Action, fetchTree } from "@/store/actions";
 import { rootEpic } from "@/store/epics";
 import reducer from "@/store/reducer";
 import { RepoState } from "@/store/state";
@@ -20,6 +20,7 @@ const store = redux.createStore(
   )
 );
 epicMiddleware.run(rootEpic);
+store.dispatch(fetchTree());
 
 ReactDOM.render(
   <Provider store={store}>

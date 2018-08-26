@@ -1,20 +1,14 @@
 import { FileDiff } from "@/api/github/file";
 import { Editor } from "@/components/editor/Editor";
 import { Tree } from "@/components/tree/Tree";
-import { Dispatch, fetchTree } from "@/store/actions";
 import { RepoState } from "@/store/state";
 import React from "react";
 import { connect } from "react-redux";
 import "./App.css";
 import * as styles from "./App.module.css";
 
-const PureApp = (props: {
-  load: () => void;
-  filePath: string | null;
-  fileDiff: FileDiff;
-}) => (
+const PureApp = (props: { filePath: string | null; fileDiff: FileDiff }) => (
   <div className={styles.App}>
-    <button onClick={props.load}>Load</button>
     <Tree />
     <Editor content={props.fileDiff} filePath={props.filePath} />
   </div>
@@ -35,9 +29,7 @@ const mapStateToProps = (
         },
   filePath: state.selectedFile && state.selectedFile.path
 });
-const mapDispatchToProps = (dispatch: Dispatch) => ({
-  load: () => dispatch(fetchTree())
-});
+const mapDispatchToProps = null;
 
 export const App = connect(
   mapStateToProps,
