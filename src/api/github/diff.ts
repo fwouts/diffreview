@@ -70,7 +70,7 @@ export async function loadDiff(
     )
   );
 
-  return buildUpdatedDirectory(originalFiles, modifiedFiles);
+  return buildUpdatedDirectory(originalFiles, modifiedFiles, "");
 }
 
 // This is not provided by Octokit, so we do it instead.
@@ -122,90 +122,119 @@ function insertKey<Item>(tree: Tree<Item>, path: string, item: Item) {
 
 function buildUpdatedDirectory(
   originalFiles: OriginalTree,
-  modifiedFiles: ModifiedTree
+  modifiedFiles: ModifiedTree,
+  path: string
 ): UpdatedDirectory {
   const diffEntries: { [entryName: string]: DiffTreeEntry } = {};
   for (const [name, entry] of Object.entries(originalFiles)) {
+    const childPath = path + "/" + name;
     const modified = modifiedFiles[name];
     if (modified) {
       // Was it updated or deleted?
       if (entry.kind === "tree" && modified.kind === "tree") {
-        diffEntries[name] = buildUpdatedDirectory(entry.tree, modified.tree);
+        diffEntries[name] = buildUpdatedDirectory(
+          entry.tree,
+          modified.tree,
+          childPath
+        );
       } else if (entry.kind === "item" && modified.kind === "item") {
         if (modified.item.status === "modified") {
           diffEntries[name] = {
-            kind: "updated-file"
+            kind: "updated-file",
+            path: childPath,
+            fileShaBefore: entry.item.sha,
+            fileShaAfter: modified.item.sha
           };
         } else if (modified.item.status === "removed") {
           diffEntries[name] = {
-            kind: "deleted-file"
+            kind: "deleted-file",
+            path: childPath,
+            fileShaBefore: entry.item.sha
           };
         }
         // Note: other statuses are "added" and "renamed".
       }
     } else {
       if (entry.kind === "tree") {
-        diffEntries[name] = buildUnchangedDirectory(entry.tree);
+        diffEntries[name] = buildUnchangedDirectory(entry.tree, childPath);
       } else {
         diffEntries[name] = {
-          kind: "unchanged-file"
+          kind: "unchanged-file",
+          path: childPath,
+          fileSha: entry.item.sha
         };
       }
     }
   }
   for (const [name, entry] of Object.entries(modifiedFiles)) {
+    const childPath = path + "/" + name;
     if (!originalFiles[name]) {
       // This is new.
       if (entry.kind === "tree") {
-        diffEntries[name] = buildAddedDirectory(entry.tree);
+        diffEntries[name] = buildAddedDirectory(entry.tree, childPath);
       } else {
         diffEntries[name] = {
-          kind: "added-file"
+          kind: "added-file",
+          path: childPath,
+          fileShaAfter: entry.item.sha
         };
       }
     }
   }
   return {
     kind: "updated-dir",
-    entries: diffEntries
+    entries: diffEntries,
+    path
   };
 }
 
-function buildAddedDirectory(modifiedFiles: ModifiedTree): AddedDirectory {
+function buildAddedDirectory(
+  modifiedFiles: ModifiedTree,
+  path: string
+): AddedDirectory {
   const addedEntries: { [entryName: string]: AddedFile | AddedDirectory } = {};
   for (const [name, entry] of Object.entries(modifiedFiles)) {
+    const childPath = path + "/" + name;
     if (entry.kind === "tree") {
-      addedEntries[name] = buildAddedDirectory(entry.tree);
+      addedEntries[name] = buildAddedDirectory(entry.tree, childPath);
     } else {
       addedEntries[name] = {
-        kind: "added-file"
+        kind: "added-file",
+        path: childPath,
+        fileShaAfter: entry.item.sha
       };
     }
   }
   return {
     kind: "added-dir",
-    entries: addedEntries
+    entries: addedEntries,
+    path
   };
 }
 
 function buildUnchangedDirectory(
-  originalFiles: OriginalTree
+  originalFiles: OriginalTree,
+  path: string
 ): UnchangedDirectory {
   const existingEntries: {
     [entryName: string]: UnchangedFile | UnchangedDirectory;
   } = {};
   for (const [name, entry] of Object.entries(originalFiles)) {
+    const childPath = path + "/" + name;
     if (entry.kind === "tree") {
-      existingEntries[name] = buildUnchangedDirectory(entry.tree);
+      existingEntries[name] = buildUnchangedDirectory(entry.tree, childPath);
     } else {
       existingEntries[name] = {
-        kind: "unchanged-file"
+        kind: "unchanged-file",
+        path: childPath,
+        fileSha: entry.item.sha
       };
     }
   }
   return {
     kind: "unchanged-dir",
-    entries: existingEntries
+    entries: existingEntries,
+    path
   };
 }
 
@@ -213,7 +242,6 @@ export type DiffTreeEntry =
   | AddedFile
   | AddedDirectory
   | DeletedFile
-  | DeletedDirectory
   | UpdatedFile
   | UpdatedDirectory
   | UnchangedFile
@@ -221,36 +249,43 @@ export type DiffTreeEntry =
 
 export interface AddedFile {
   kind: "added-file";
+  fileShaAfter: string;
+  path: string;
 }
 
 export interface DeletedFile {
   kind: "deleted-file";
+  fileShaBefore: string;
+  path: string;
 }
 
 export interface UpdatedFile {
   kind: "updated-file";
+  fileShaBefore: string;
+  fileShaAfter: string;
+  path: string;
 }
 
 export interface UnchangedFile {
   kind: "unchanged-file";
+  fileSha: string;
+  path: string;
 }
 
 export interface AddedDirectory {
   kind: "added-dir";
   entries: { [entryName: string]: AddedFile | AddedDirectory };
-}
-
-export interface DeletedDirectory {
-  kind: "deleted-dir";
-  oldId: string;
+  path: string;
 }
 
 export interface UpdatedDirectory {
   kind: "updated-dir";
   entries: { [entryName: string]: DiffTreeEntry };
+  path: string;
 }
 
 export interface UnchangedDirectory {
   kind: "unchanged-dir";
   entries: { [entryName: string]: UnchangedFile | UnchangedDirectory };
+  path: string;
 }

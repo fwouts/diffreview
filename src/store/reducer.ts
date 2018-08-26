@@ -7,7 +7,8 @@ export default (
     repoOwner: config.OWNER,
     repoName: config.REPO,
     pullRequestId: config.PULL_REQUEST_ID,
-    tree: null
+    tree: null,
+    selectedFile: null
   },
   action: Action
 ): RepoState => {
@@ -16,6 +17,11 @@ export default (
       return {
         ...state,
         tree: action.tree
+      };
+    case "UPDATE_SELECTED_FILE":
+      return {
+        ...state,
+        selectedFile: action.state
       };
     default:
       return state;
