@@ -57,7 +57,9 @@ const EntryComponent = (props: { name: string; entry: DiffTreeEntry }) => {
   }
 };
 
-const itemMapStateToProps = null;
+const itemMapStateToProps = (state: RepoState) => ({
+  selectedPath: state.selectedFile && state.selectedFile.path
+});
 const itemMapDispatchToProps = (dispatch: Dispatch<Action>) => ({
   selectFile: (path: string) => dispatch(selectFile(path))
 });
@@ -65,10 +67,15 @@ const itemMapDispatchToProps = (dispatch: Dispatch<Action>) => ({
 const PureAddedFileComponent = (props: {
   name: string;
   file: AddedFile;
+  selectedPath: string | null;
   selectFile(path: string): void;
 }) => (
   <div
-    {...classNames(styles.file, styles.added)}
+    {...classNames(
+      styles.file,
+      styles.added,
+      props.selectedPath === props.file.path && styles.selected
+    )}
     onClick={() => props.selectFile(props.file.path)}
   >
     {props.name}
@@ -83,10 +90,15 @@ const AddedFileComponent = connect(
 const PureDeletedFileComponent = (props: {
   name: string;
   file: DeletedFile;
+  selectedPath: string | null;
   selectFile(path: string): void;
 }) => (
   <div
-    {...classNames(styles.file, styles.deleted)}
+    {...classNames(
+      styles.file,
+      styles.deleted,
+      props.selectedPath === props.file.path && styles.selected
+    )}
     onClick={() => props.selectFile(props.file.path)}
   >
     {props.name}
@@ -101,10 +113,15 @@ const DeletedFileComponent = connect(
 const PureUpdatedFileComponent = (props: {
   name: string;
   file: UpdatedFile;
+  selectedPath: string | null;
   selectFile(path: string): void;
 }) => (
   <div
-    {...classNames(styles.file, styles.updated)}
+    {...classNames(
+      styles.file,
+      styles.updated,
+      props.selectedPath === props.file.path && styles.selected
+    )}
     onClick={() => props.selectFile(props.file.path)}
   >
     {props.name}
@@ -119,10 +136,14 @@ const UpdatedFileComponent = connect(
 const PureUnchangedFileComponent = (props: {
   name: string;
   file: UnchangedFile;
+  selectedPath: string | null;
   selectFile(path: string): void;
 }) => (
   <div
-    {...classNames(styles.file)}
+    {...classNames(
+      styles.file,
+      props.selectedPath === props.file.path && styles.selected
+    )}
     onClick={() => props.selectFile(props.file.path)}
   >
     {props.name}
