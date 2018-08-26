@@ -18,7 +18,8 @@ export class Editor extends React.Component<EditorProps> {
   componentDidMount() {
     this.editor = monaco.editor.createDiffEditor(this.editorRef.current!, {
       automaticLayout: true,
-      readOnly: true
+      readOnly: true,
+      theme: "vs-dark"
     });
     this.updateModel();
   }
