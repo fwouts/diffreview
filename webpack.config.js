@@ -1,6 +1,7 @@
 const path = require("path");
 const webpack = require("webpack");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
+const MonacoWebpackPlugin = require("monaco-editor-webpack-plugin");
 
 const mode = process.env.NODE_ENV || "development";
 
@@ -65,6 +66,7 @@ module.exports = {
     new HtmlWebpackPlugin({
       template: path.resolve(__dirname, "src", "main.html")
     }),
+    new MonacoWebpackPlugin(),
     new webpack.DefinePlugin({
       NODE_ENV: mode
     })
