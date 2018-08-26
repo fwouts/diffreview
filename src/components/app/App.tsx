@@ -8,22 +8,32 @@ import { connect } from "react-redux";
 import "./App.css";
 import * as styles from "./App.module.css";
 
-const PureApp = (props: { load: () => void; fileDiff: FileDiff }) => (
+const PureApp = (props: {
+  load: () => void;
+  filePath: string | null;
+  fileDiff: FileDiff;
+}) => (
   <div className={styles.App}>
     <button onClick={props.load}>Load</button>
     <Tree />
-    <Editor content={props.fileDiff} />
+    <Editor content={props.fileDiff} filePath={props.filePath} />
   </div>
 );
 
-const mapStateToProps = (state: RepoState): { fileDiff: FileDiff } => ({
+const mapStateToProps = (
+  state: RepoState
+): {
+  filePath: string | null;
+  fileDiff: FileDiff;
+} => ({
   fileDiff:
     state.selectedFile && state.selectedFile.kind === "loaded"
       ? state.selectedFile
       : {
           before: null,
           after: null
-        }
+        },
+  filePath: state.selectedFile && state.selectedFile.path
 });
 const mapDispatchToProps = (dispatch: Dispatch) => ({
   load: () => dispatch(fetchTree())
