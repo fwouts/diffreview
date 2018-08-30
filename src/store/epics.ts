@@ -1,84 +1,143 @@
 import {
   AddedDirectory,
-  loadDiff,
+  loadDiffTree,
   UnchangedDirectory,
   UpdatedDirectory
 } from "@/api/github/diff";
 import { loadDiffFile, ShaDiff } from "@/api/github/file";
+import { producePath } from "@/routing";
 import {
   Action,
+  FetchTreeAction,
+  FetchTreeWithFileAction,
   SelectFileAction,
   updateSelectedFile,
-  updateTree
+  UpdateSelectedFileAction,
+  updateTree,
+  UpdateTreeAction
 } from "@/store/actions";
 import { RepoState } from "@/store/state";
+import { push, RouterAction } from "connected-react-router";
 import {
   ActionsObservable,
   combineEpics,
   ofType,
   StateObservable
 } from "redux-observable";
-import { from, Observable } from "rxjs";
+import { concat, empty, from, Observable, of } from "rxjs";
 import { map, merge, mergeMap } from "rxjs/operators";
 import * as config from "../config";
 
-export const fetchTreeEpic = (
+const fetchTreeWithFileEpic = (
+  action$: ActionsObservable<Action>,
+  state$: StateObservable<RepoState>
+): Observable<Action> =>
+  action$.pipe(
+    ofType("FETCH_TREE_WITH_FILE"),
+    mergeMap((action: FetchTreeWithFileAction) => {
+      const updateTree = fetchTree(
+        state$.value,
+        action.owner,
+        action.repo,
+        action.pullRequestNumber
+      );
+      return concat(
+        updateTree,
+        updateTree.pipe(
+          mergeMap(
+            updateTreeAction =>
+              action.path
+                ? selectFile(
+                    action.owner,
+                    action.repo,
+                    updateTreeAction.tree,
+                    action.path
+                  )
+                : empty()
+          )
+        )
+      );
+    })
+  );
+
+const fetchTreeEpic = (
   action$: ActionsObservable<Action>,
   state$: StateObservable<RepoState>
 ): Observable<Action> =>
   action$.pipe(
     ofType("FETCH_TREE"),
-    mergeMap(
-      (_action): Observable<Action> =>
-        from(
-          loadDiff(
-            config.GITHUB_TOKEN,
-            state$.value.repoOwner,
-            state$.value.repoName,
-            state$.value.pullRequestId
-          )
-        ).pipe(map(tree => updateTree(tree)))
+    mergeMap((action: FetchTreeAction) =>
+      fetchTree(
+        state$.value,
+        action.owner,
+        action.repo,
+        action.pullRequestNumber
+      )
     )
   );
 
-export const selectFile = (
+const navigateToFileEpic = (
   action$: ActionsObservable<Action>,
   state$: StateObservable<RepoState>
-): Observable<Action> =>
+): Observable<RouterAction> =>
   action$.pipe(
-    ofType("SELECT_FILE"),
-    mergeMap(
-      (action: SelectFileAction): Observable<Action> => {
-        const shaDiff = getShaDiff(state$.value.tree, action.path);
-        return from([
-          updateSelectedFile({
-            kind: "loading",
-            path: action.path
-          })
-        ]).pipe(
-          merge(
-            from(
-              loadDiffFile(
-                config.GITHUB_TOKEN,
-                state$.value.repoOwner,
-                state$.value.repoName,
-                shaDiff
-              )
-            ).pipe(
-              map(fileDiff =>
-                updateSelectedFile({
-                  kind: "loaded",
-                  path: action.path,
-                  before: fileDiff.before,
-                  after: fileDiff.after
-                })
-              )
-            )
+    ofType("NAVIGATE_TO_FILE"),
+    mergeMap((action: SelectFileAction) =>
+      of(
+        push(
+          producePath(
+            state$.value.owner!,
+            state$.value.repo!,
+            state$.value.pullRequestNumber!,
+            action.path
           )
-        );
-      }
+        )
+      )
     )
   );
+
+function fetchTree(
+  state: RepoState,
+  owner: string,
+  repo: string,
+  pullRequestNumber: number
+): Observable<UpdateTreeAction> {
+  if (state.owner === owner && state.repo === repo && state.tree) {
+    // No need to reload.
+    return of(updateTree(owner, repo, pullRequestNumber, state.tree));
+  }
+  return from(
+    loadDiffTree(config.GITHUB_TOKEN, owner, repo, pullRequestNumber)
+  ).pipe(map(tree => updateTree(owner, repo, pullRequestNumber, tree)));
+}
+
+function selectFile(
+  owner: string,
+  repo: string,
+  tree: UpdatedDirectory | null,
+  path: string
+): Observable<UpdateSelectedFileAction> {
+  const shaDiff = getShaDiff(tree, path);
+  return from([
+    updateSelectedFile({
+      kind: "loading",
+      path
+    })
+  ]).pipe(
+    merge(
+      from(loadDiffFile(config.GITHUB_TOKEN, owner, repo, shaDiff)).pipe(
+        map(fileDiff =>
+          updateSelectedFile({
+            kind: "loaded",
+            path,
+            before: fileDiff.before,
+            after: fileDiff.after
+          })
+        )
+      )
+    )
+  );
+}
 
 function getShaDiff(
   tree: UpdatedDirectory | AddedDirectory | UnchangedDirectory | null,
@@ -138,4 +197,9 @@ function getShaDiff(
     }
   }
 }
-export const rootEpic = combineEpics(fetchTreeEpic, selectFile);
+
+export const rootEpic = combineEpics(
+  fetchTreeWithFileEpic,
+  fetchTreeEpic,
+  navigateToFileEpic
+);

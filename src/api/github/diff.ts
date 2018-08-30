@@ -1,10 +1,10 @@
 import Octokit from "@octokit/rest";
 
-export async function loadDiff(
+export async function loadDiffTree(
   token: string,
   owner: string,
   repo: string,
-  pullRequestId: number
+  pullRequestNumber: number
 ): Promise<UpdatedDirectory> {
   const octokit = new Octokit();
   octokit.authenticate({
@@ -14,7 +14,7 @@ export async function loadDiff(
   const pullRequestCommits = (await octokit.pullRequests.getCommits({
     owner,
     repo,
-    number: pullRequestId
+    number: pullRequestNumber
   })).data;
 
   // Figure out which commit sha to compare this pull requests to.
@@ -57,7 +57,7 @@ export async function loadDiff(
   const pullRequestFiles = (await octokit.pullRequests.getFiles({
     owner,
     repo,
-    number: pullRequestId,
+    number: pullRequestNumber,
     per_page: 300
   })).data;
   const modifiedFiles = makeTree(

@@ -1,12 +1,11 @@
 import { Action } from "@/store/actions";
 import { RepoState } from "@/store/state";
-import * as config from "../config";
 
 export default (
   state: RepoState = {
-    repoOwner: config.OWNER,
-    repoName: config.REPO,
-    pullRequestId: config.PULL_REQUEST_ID,
+    owner: null,
+    repo: null,
+    pullRequestNumber: null,
     tree: null,
     selectedFile: null
   },
@@ -16,6 +15,9 @@ export default (
     case "UPDATE_TREE":
       return {
         ...state,
+        owner: action.owner,
+        repo: action.repo,
+        pullRequestNumber: action.pullRequestNumber,
         tree: action.tree
       };
     case "UPDATE_SELECTED_FILE":

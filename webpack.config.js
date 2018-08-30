@@ -2,6 +2,8 @@ const path = require("path");
 const webpack = require("webpack");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const MonacoWebpackPlugin = require("monaco-editor-webpack-plugin");
+const history = require("connect-history-api-fallback");
+const convert = require("koa-connect");
 
 const mode = process.env.NODE_ENV || "development";
 
@@ -17,7 +19,8 @@ module.exports = {
   mode,
   output: {
     filename: "bundle.js",
-    path: path.resolve(__dirname, "dist")
+    path: path.resolve(__dirname, "dist"),
+    publicPath: "/"
   },
   node: {
     // Some libraries import Node modules but don't use them in the browser.
@@ -71,4 +74,17 @@ module.exports = {
       NODE_ENV: mode
     })
   ]
+};
+
+// Serve any URL with index.html, not just the root path.
+// Required for routing.
+module.exports.serve = {
+  content: [__dirname],
+  add: (app, middleware, options) => {
+    const historyOptions = {
+      // Allow URLS such as /owner/repo/pull-request-id/...
+      rewrites: [{ from: /[\w\-]+\/[\w\-]+\/\d+.*/, to: "/index.html" }]
+    };
+    app.use(convert(history(historyOptions)));
+  }
 };
