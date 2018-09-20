@@ -23,8 +23,11 @@ export function parsePath(path: string) {
     // TODO: Handle properly.
     throw new Error();
   }
+  const maybeFilePathWithoutEmpty = maybeFilePath.filter(p => p.length > 0);
   const filePath =
-    maybeFilePath.length > 0 ? `/${maybeFilePath.join("/")}` : null;
+    maybeFilePathWithoutEmpty.length > 0
+      ? `/${maybeFilePathWithoutEmpty.join("/")}`
+      : null;
   return {
     owner,
     repo,
