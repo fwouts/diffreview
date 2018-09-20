@@ -21,12 +21,18 @@ const devToolsExtension = (window as any).devToolsExtension;
 
 const epicMiddleware = createEpicMiddleware<Action, Action, AppState>();
 const history = createBrowserHistory();
+const storeEnhancer = redux.applyMiddleware(
+  routerMiddleware(history),
+  epicMiddleware
+);
 const store = redux.createStore(
   connectRouter(history)(reducer as redux.Reducer<AppState, redux.AnyAction>),
-  redux.compose(
-    redux.applyMiddleware(routerMiddleware(history), epicMiddleware),
-    devToolsExtension ? devToolsExtension() : undefined
-  )
+  devToolsExtension
+    ? redux.compose(
+        storeEnhancer,
+        devToolsExtension ? devToolsExtension() : undefined
+      )
+    : storeEnhancer
 );
 epicMiddleware.run(rootEpic);
 
