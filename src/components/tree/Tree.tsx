@@ -9,7 +9,7 @@ import {
   UpdatedFile
 } from "@/api/github/diff";
 import { Action, selectFile } from "@/store/actions";
-import { RepoState } from "@/store/state";
+import { AppState } from "@/store/state";
 import { classNames } from "@/styling/classes";
 import assertNever from "assert-never";
 import React from "react";
@@ -43,8 +43,9 @@ const EntryComponent = (props: { name: string; entry: DiffTreeEntry }) => {
   }
 };
 
-const itemMapStateToProps = (state: RepoState) => ({
-  selectedPath: state.selectedFile && state.selectedFile.path
+const itemMapStateToProps = (state: AppState) => ({
+  selectedPath:
+    state.repo && state.repo.selectedFile ? state.repo.selectedFile.path : null
 });
 const itemMapDispatchToProps = (dispatch: Dispatch<Action>) => ({
   selectFile: (path: string) => dispatch(selectFile(path))
@@ -112,8 +113,8 @@ const DirectoryComponent = connect(
   itemMapDispatchToProps
 )(PureDirectoryComponent);
 
-const mapStateToProps = (state: RepoState) => ({
-  tree: state.tree
+const mapStateToProps = (state: AppState) => ({
+  tree: state.repo ? state.repo.tree : null
 });
 const mapDispatchToProps = null;
 

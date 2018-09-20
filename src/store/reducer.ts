@@ -1,29 +1,32 @@
 import { Action } from "@/store/actions";
-import { RepoState } from "@/store/state";
+import { AppState } from "@/store/state";
 
 export default (
-  state: RepoState = {
-    owner: null,
-    repo: null,
-    pullRequestNumber: null,
-    tree: null,
-    selectedFile: null
+  state: AppState = {
+    repo: null
   },
   action: Action
-): RepoState => {
+): AppState => {
   switch (action.type) {
     case "UPDATE_TREE":
       return {
-        ...state,
-        owner: action.owner,
-        repo: action.repo,
-        pullRequestNumber: action.pullRequestNumber,
-        tree: action.tree
+        repo: {
+          owner: action.owner,
+          repo: action.repo,
+          pullRequestNumber: action.pullRequestNumber,
+          tree: action.tree,
+          selectedFile: null
+        }
       };
     case "UPDATE_SELECTED_FILE":
+      if (!state.repo) {
+        return state;
+      }
       return {
-        ...state,
-        selectedFile: action.state
+        repo: {
+          ...state.repo,
+          selectedFile: action.state
+        }
       };
     default:
       return state;

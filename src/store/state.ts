@@ -1,10 +1,13 @@
 import { UpdatedDirectory } from "@/api/github/diff";
 
-// TODO: Remove | null and wrap into a higher-level state.
+export interface AppState {
+  repo: RepoState | null;
+}
+
 export interface RepoState {
-  owner: string | null;
-  repo: string | null;
-  pullRequestNumber: number | null;
+  owner: string;
+  repo: string;
+  pullRequestNumber: number;
   tree: UpdatedDirectory | null;
   selectedFile: SelectedFileState | null;
 }

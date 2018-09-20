@@ -3,7 +3,7 @@ import { parsePath } from "@/routing";
 import { Action } from "@/store/actions";
 import { rootEpic } from "@/store/epics";
 import reducer from "@/store/reducer";
-import { RepoState } from "@/store/state";
+import { AppState } from "@/store/state";
 import {
   ConnectedRouter,
   connectRouter,
@@ -19,10 +19,10 @@ import { createEpicMiddleware } from "redux-observable";
 
 const devToolsExtension = (window as any).devToolsExtension;
 
-const epicMiddleware = createEpicMiddleware<Action, Action, RepoState>();
+const epicMiddleware = createEpicMiddleware<Action, Action, AppState>();
 const history = createBrowserHistory();
 const store = redux.createStore(
-  connectRouter(history)(reducer as redux.Reducer<RepoState, redux.AnyAction>),
+  connectRouter(history)(reducer as redux.Reducer<AppState, redux.AnyAction>),
   redux.compose(
     redux.applyMiddleware(routerMiddleware(history), epicMiddleware),
     devToolsExtension ? devToolsExtension() : undefined

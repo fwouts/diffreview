@@ -2,7 +2,7 @@ import { FileDiff } from "@/api/github/file";
 import { Editor } from "@/components/editor/Editor";
 import { Tree } from "@/components/tree/Tree";
 import { Dispatch, fetchTreeWithFile } from "@/store/actions";
-import { RepoState } from "@/store/state";
+import { AppState } from "@/store/state";
 import React from "react";
 import { connect } from "react-redux";
 import "./App.css";
@@ -57,13 +57,15 @@ class PureApp extends React.Component<PureAppProps> {
 }
 
 const mapStateToProps = (
-  state: RepoState
+  state: AppState
 ): {
   fileDiff: FileDiff;
 } => ({
   fileDiff:
-    state.selectedFile && state.selectedFile.kind === "loaded"
-      ? state.selectedFile
+    state.repo &&
+    state.repo.selectedFile &&
+    state.repo.selectedFile.kind === "loaded"
+      ? state.repo.selectedFile
       : {
           before: null,
           after: null

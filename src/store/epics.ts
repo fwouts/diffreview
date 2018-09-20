@@ -16,7 +16,7 @@ import {
   updateTree,
   UpdateTreeAction
 } from "@/store/actions";
-import { RepoState } from "@/store/state";
+import { AppState, RepoState } from "@/store/state";
 import { push, RouterAction } from "connected-react-router";
 import {
   ActionsObservable,
@@ -30,13 +30,13 @@ import * as config from "../config";
 
 const fetchTreeWithFileEpic = (
   action$: ActionsObservable<Action>,
-  state$: StateObservable<RepoState>
+  state$: StateObservable<AppState>
 ): Observable<Action> =>
   action$.pipe(
     ofType("FETCH_TREE_WITH_FILE"),
     mergeMap((action: FetchTreeWithFileAction) => {
       const updateTree = fetchTree(
-        state$.value,
+        state$.value.repo,
         action.owner,
         action.repo,
         action.pullRequestNumber
@@ -62,49 +62,58 @@ const fetchTreeWithFileEpic = (
 
 const fetchTreeEpic = (
   action$: ActionsObservable<Action>,
-  state$: StateObservable<RepoState>
+  state$: StateObservable<AppState>
 ): Observable<Action> =>
   action$.pipe(
     ofType("FETCH_TREE"),
-    mergeMap((action: FetchTreeAction) =>
-      fetchTree(
-        state$.value,
+    mergeMap((action: FetchTreeAction) => {
+      return fetchTree(
+        state$.value.repo,
         action.owner,
         action.repo,
         action.pullRequestNumber
-      )
-    )
+      );
+    })
   );
 
 const navigateToFileEpic = (
   action$: ActionsObservable<Action>,
-  state$: StateObservable<RepoState>
+  state$: StateObservable<AppState>
 ): Observable<RouterAction> =>
   action$.pipe(
     ofType("NAVIGATE_TO_FILE"),
-    mergeMap((action: SelectFileAction) =>
-      of(
+    mergeMap((action: SelectFileAction) => {
+      const repoState = state$.value.repo;
+      if (!repoState) {
+        return empty();
+      }
+      return of(
         push(
           producePath(
-            state$.value.owner!,
-            state$.value.repo!,
-            state$.value.pullRequestNumber!,
+            repoState.owner,
+            repoState.repo,
+            repoState.pullRequestNumber,
             action.path
           )
         )
-      )
-    )
+      );
+    })
   );
 
 function fetchTree(
-  state: RepoState,
+  repoState: RepoState | null,
   owner: string,
   repo: string,
   pullRequestNumber: number
 ): Observable<UpdateTreeAction> {
-  if (state.owner === owner && state.repo === repo && state.tree) {
+  if (
+    repoState &&
+    repoState.owner === owner &&
+    repoState.repo === repo &&
+    repoState.tree
+  ) {
     // No need to reload.
-    return of(updateTree(owner, repo, pullRequestNumber, state.tree));
+    return of(updateTree(owner, repo, pullRequestNumber, repoState.tree));
   }
   return from(
     loadDiffTree(config.GITHUB_TOKEN, owner, repo, pullRequestNumber)
