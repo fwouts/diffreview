@@ -30,7 +30,7 @@ const store = redux.createStore(
   devToolsExtension
     ? redux.compose(
         storeEnhancer,
-        devToolsExtension ? devToolsExtension() : undefined
+        devToolsExtension()
       )
     : storeEnhancer
 );
