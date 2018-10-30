@@ -10,7 +10,7 @@ cd diffreview
 yarn
 ```
 
-Create a file called `src/config.ts` defining a GitHub token with the **repo** permission:
+Create a file called `src/config.ts` defining a [GitHub token](https://github.com/settings/tokens) with the **repo** permission:
 ```
 export const GITHUB_TOKEN = "....";
 ```
